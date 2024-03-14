@@ -1,0 +1,73 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+
+# Load the dataset
+data = pd.read_csv('apple_quality.csv')
+
+
+
+# Split the dataset into training, validation, and testing sets
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.25, random_state=42)
+
+# Feature Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_val_scaled = scaler.transform(X_val)
+X_test_scaled = scaler.transform(X_test)
+
+# Neural Network Implementation
+class NeuralNetwork:
+    def __init__(self, input_size):
+        self.input_size = input_size
+        self.weights = np.random.rand(input_size)
+        self.bias = np.random.rand()
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def forward(self, X):
+        return self.sigmoid(np.dot(X, self.weights) + self.bias)
+
+    def train(self, X, y, learning_rate=0.01, epochs=1000):
+        for epoch in range(epochs):
+            for i in range(len(X)):
+                prediction = self.forward(X[i])
+                self.weights += learning_rate * (y[i] - prediction) * prediction * (1 - prediction) * X[i]
+                self.bias += learning_rate * (y[i] - prediction) * prediction * (1 - prediction)
+
+    def predict(self, X):
+        predictions = []
+        for x in X:
+            prediction = self.forward(x)
+            predictions.append(round(prediction))
+        return np.array(predictions)
+
+# Train the neural network
+nn_classifier = NeuralNetwork(X_train_scaled.shape[1])
+nn_classifier.train(X_train_scaled, y_train)
+
+# Predictions
+y_val_pred = nn_classifier.predict(X_val_scaled)
+
+# Metrics
+accuracy = accuracy_score(y_val, y_val_pred)
+precision = precision_score(y_val, y_val_pred)
+recall = recall_score(y_val, y_val_pred)
+f1 = f1_score(y_val, y_val_pred)
+
+print("Validation Metrics:")
+print(f"Accuracy: {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall: {recall:.4f}")
+print(f"F1 Score: {f1:.4f}")
+
+
+
+plt.legend()
+plt.grid(True)
+plt.show()
